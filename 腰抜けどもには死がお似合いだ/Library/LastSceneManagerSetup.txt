@@ -1,5 +1,6 @@
 sceneSetups:
-- path: Assets/Scenes/SampleScene.unity
+- path: Assets/Kevin Iglesias/Human Animations/Unity Demo Scenes/Human Melee Animations/Human
+    Melee Animations - Unity Demo Scene.unity
   isLoaded: 1
   isActive: 1
   isSubScene: 0
