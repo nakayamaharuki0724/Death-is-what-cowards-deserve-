@@ -285,11 +285,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 5
   rotationSpeed: 10
-  animator: {fileID: 903489475}
-  rb: {fileID: 903489473}
---- !u!95 &903489475 stripped
-Animator:
-  m_CorrespondingSourceObject: {fileID: 7929906376812067818, guid: e76e3a3af8c9c5e42968c424e2b49ef2, type: 3}
+  animator: {fileID: 0}
+  rb: {fileID: 0}
+--- !u!4 &903489476 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4101797402397188496, guid: e76e3a3af8c9c5e42968c424e2b49ef2, type: 3}
   m_PrefabInstance: {fileID: 1193836747}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &963194225
@@ -303,6 +303,7 @@ GameObject:
   - component: {fileID: 963194228}
   - component: {fileID: 963194227}
   - component: {fileID: 963194226}
+  - component: {fileID: 963194229}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -377,13 +378,31 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 1, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &963194229
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 963194225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af0a4afc1226c1a44a41a2ffec3e2a7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: {fileID: 903489476}
+  sensitivity: 1.5
+  distance: 2
+  offset: {x: 0, y: 1, z: 0}
+  minY: -30
+  maxY: 60
 --- !u!1001 &1193836747
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -394,7 +413,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3722035622965246762, guid: e76e3a3af8c9c5e42968c424e2b49ef2, type: 3}
       propertyPath: m_Name
-      value: HumanM_Dummy_Red - Sword and Shield
+      value: Player
       objectReference: {fileID: 0}
     - target: {fileID: 4101797402397188496, guid: e76e3a3af8c9c5e42968c424e2b49ef2, type: 3}
       propertyPath: m_LocalPosition.x
@@ -515,7 +534,7 @@ PrefabInstance:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 963194228}
   - {fileID: 705507995}
+  - {fileID: 963194228}
   - {fileID: 1193836747}
   - {fileID: 1721254052}
