@@ -53,7 +53,7 @@ public class Player : MonoBehaviour
             Vector3 moveDirection = moveInput * moveSpeed;
             if (rb != null)
             {
-                rb.velocity = new Vector3(moveDirection.x, rb.velocity.y, moveDirection.z);
+                rb.linearVelocity = new Vector3(moveDirection.x, rb.linearVelocity.y, moveDirection.z);
             }
             else
             {
@@ -72,7 +72,7 @@ public class Player : MonoBehaviour
         {
             // Stop movement
             if (rb != null)
-                rb.velocity = new Vector3(0, rb.velocity.y, 0);
+                rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
 
             // Play idle animation
             if (animator != null)
