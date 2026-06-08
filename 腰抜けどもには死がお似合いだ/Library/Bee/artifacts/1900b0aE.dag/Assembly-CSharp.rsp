@@ -401,6 +401,7 @@
 -analyzer:"C:/Program Files/Unity/Hub/Editor/6000.0.45f1/Editor/Data/Tools/Unity.SourceGenerators/Unity.UIToolkit.SourceGenerator.dll"
 "Assets/Kevin Iglesias/Human Animations/Scripts/SpineProxy.cs"
 "Assets/Scripts/Player.cs"
+"Assets/Scripts/TitleManager.cs"
 "Assets/Scripts/TPSCamera.cs"
 -langversion:9.0
 /deterministic
