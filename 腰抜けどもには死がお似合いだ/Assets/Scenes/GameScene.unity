@@ -379,13 +379,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1eaefa84e0c65b4fa6c266792fedbc3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 5
+  walkSpeed: 2.2
+  runSpeed: 5
+  runInputThreshold: 0.75
+  acceleration: 14
+  deceleration: 18
   rotationSpeed: 10
-  animator: {fileID: 0}
-  rb: {fileID: 0}
+  lockMovementWhileAction: 1
+  animator: {fileID: 903489477}
+  rb: {fileID: 903489473}
+  cameraTransform: {fileID: 903489476}
 --- !u!4 &903489476 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4101797402397188496, guid: e76e3a3af8c9c5e42968c424e2b49ef2, type: 3}
+  m_PrefabInstance: {fileID: 1193836747}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &903489477 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 7929906376812067818, guid: e76e3a3af8c9c5e42968c424e2b49ef2, type: 3}
   m_PrefabInstance: {fileID: 1193836747}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &963194225
@@ -499,6 +510,10 @@ MonoBehaviour:
   offset: {x: 0, y: 1, z: 0}
   minY: -30
   maxY: 60
+  rightStickHorizontalAxis: CameraHorizontal
+  rightStickVerticalAxis: CameraVertical
+  stickSensitivity: 120
+  stickDeadZone: 0.2
 --- !u!1001 &1193836747
 PrefabInstance:
   m_ObjectHideFlags: 0

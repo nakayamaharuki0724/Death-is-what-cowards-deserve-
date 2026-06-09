@@ -2,12 +2,21 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float walkSpeed = 2.2f;
+    [SerializeField] private float runSpeed = 5f;
+    [SerializeField] private float runInputThreshold = 0.75f;
+    [SerializeField] private float acceleration = 14f;
+    [SerializeField] private float deceleration = 18f;
     [SerializeField] private float rotationSpeed = 10f;
+    [SerializeField] private bool lockMovementWhileAction = true;
     [SerializeField] private Animator animator;
     [SerializeField] private Rigidbody rb;
+    [SerializeField] private Transform cameraTransform;
+
+    private OrbitCamera orbitCamera;
 
     private Vector3 moveInput;
+    private float currentSpeed;
     private bool isAttacking = false;
     private bool isParrying = false;
 
@@ -17,67 +26,130 @@ public class Player : MonoBehaviour
             animator = GetComponent<Animator>();
         if (rb == null)
             rb = GetComponent<Rigidbody>();
+        if (cameraTransform == null && Camera.main != null)
+            cameraTransform = Camera.main.transform;
+
+        if (cameraTransform != null)
+            orbitCamera = cameraTransform.GetComponent<OrbitCamera>();
+
+        if (orbitCamera == null)
+            orbitCamera = FindObjectOfType<OrbitCamera>();
+
+        if (rb != null)
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
     }
 
     private void Update()
     {
         HandleInput();
-        HandleMovement();
+
+        if (rb == null)
+            HandleMovement(Time.deltaTime);
+    }
+
+    private void FixedUpdate()
+    {
+        if (rb != null)
+            HandleMovement(Time.fixedDeltaTime);
     }
 
     private void HandleInput()
     {
-        // Left stick movement
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
-        moveInput = new Vector3(horizontal, 0, vertical).normalized;
+        moveInput = new Vector3(horizontal, 0, vertical);
+        if (moveInput.sqrMagnitude > 1f)
+            moveInput.Normalize();
 
-        // Y button attack
-        if (Input.GetButtonDown("Fire2")) // Y button
+        if (Input.GetButtonDown("Fire2"))
         {
             Attack();
         }
 
-        // X button parry
-        if (Input.GetButtonDown("Fire3")) // X button
+        if (Input.GetButtonDown("Fire3"))
         {
             Parry();
         }
     }
 
-    private void HandleMovement()
+    private void HandleMovement(float deltaTime)
     {
-        if (moveInput.magnitude > 0)
+        bool isInAction = isAttacking || isParrying;
+        float inputMagnitude = moveInput.magnitude;
+
+        Vector3 moveDirection = GetMoveDirectionFromInput();
+        if (lockMovementWhileAction && isInAction)
         {
-            // Move the player
-            Vector3 moveDirection = moveInput * moveSpeed;
-            if (rb != null)
+            moveDirection = Vector3.zero;
+            inputMagnitude = 0f;
+        }
+
+        float targetSpeed = 0f;
+        if (inputMagnitude > 0.0001f)
+        {
+            if (inputMagnitude < runInputThreshold)
             {
-                rb.linearVelocity = new Vector3(moveDirection.x, rb.linearVelocity.y, moveDirection.z);
+                float t = inputMagnitude / Mathf.Max(0.01f, runInputThreshold);
+                targetSpeed = walkSpeed * t;
             }
             else
             {
-                transform.Translate(moveDirection * Time.deltaTime);
+                float t = (inputMagnitude - runInputThreshold) / Mathf.Max(0.01f, 1f - runInputThreshold);
+                targetSpeed = Mathf.Lerp(walkSpeed, runSpeed, t);
             }
+        }
 
-            // Rotate player to face movement direction
-            Quaternion targetRotation = Quaternion.LookRotation(moveInput);
-            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        float speedChange = targetSpeed > currentSpeed ? acceleration : deceleration;
+        currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, speedChange * deltaTime);
 
-            // Play walk animation
-            if (animator != null)
-                animator.SetBool("IsWalking", true);
+        Vector3 velocity = moveDirection * currentSpeed;
+
+        if (rb != null)
+            rb.linearVelocity = new Vector3(velocity.x, rb.linearVelocity.y, velocity.z);
+        else
+            transform.Translate(velocity * deltaTime, Space.World);
+
+        if (moveDirection.sqrMagnitude > 0.0001f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, rotationSpeed * deltaTime);
+        }
+
+        if (animator != null)
+            animator.SetBool("IsWalking", currentSpeed > 0.05f);
+    }
+
+    private Vector3 GetMoveDirectionFromInput()
+    {
+        Vector3 camForward;
+        Vector3 camRight;
+
+        if (orbitCamera != null)
+        {
+            camForward = orbitCamera.PlanarForward;
+            camRight = orbitCamera.PlanarRight;
+        }
+        else if (cameraTransform != null)
+        {
+            camForward = cameraTransform.forward;
+            camRight = cameraTransform.right;
+
+            camForward.y = 0f;
+            camRight.y = 0f;
+
+            camForward.Normalize();
+            camRight.Normalize();
         }
         else
         {
-            // Stop movement
-            if (rb != null)
-                rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
-
-            // Play idle animation
-            if (animator != null)
-                animator.SetBool("IsWalking", false);
+            return moveInput;
         }
+
+        Vector3 direction = camForward * moveInput.z + camRight * moveInput.x;
+        if (direction.sqrMagnitude > 1f)
+            direction.Normalize();
+
+        return direction;
     }
 
     private void Attack()
@@ -89,7 +161,6 @@ public class Player : MonoBehaviour
         if (animator != null)
             animator.SetTrigger("Attack");
 
-        // Attack duration - adjust as needed
         Invoke(nameof(ResetAttack), 0.6f);
     }
 
@@ -107,7 +178,6 @@ public class Player : MonoBehaviour
         if (animator != null)
             animator.SetTrigger("Parry");
 
-        // Parry duration - adjust as needed
         Invoke(nameof(ResetParry), 0.8f);
     }
 
