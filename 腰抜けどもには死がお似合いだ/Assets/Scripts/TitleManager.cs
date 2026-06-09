@@ -1,11 +1,13 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class TitleManager : MonoBehaviour
 {
+
+
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetButtonDown("Submit"))
         {
             SceneManager.LoadScene("GameScene");
         }
