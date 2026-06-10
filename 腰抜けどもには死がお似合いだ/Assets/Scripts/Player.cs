@@ -9,6 +9,8 @@ public class Player : MonoBehaviour
     [SerializeField] private float deceleration = 18f;
     [SerializeField] private float rotationSpeed = 10f;
     [SerializeField] private bool lockMovementWhileAction = true;
+    [SerializeField] private float attackLockDuration = 0.6f;
+    [SerializeField] private float parryLockDuration = 0.8f;
     [SerializeField] private Animator animator;
     [SerializeField] private Rigidbody rb;
     [SerializeField] private Transform cameraTransform;
@@ -17,8 +19,7 @@ public class Player : MonoBehaviour
 
     private Vector3 moveInput;
     private float currentSpeed;
-    private bool isAttacking = false;
-    private bool isParrying = false;
+    private float actionLockTimer;
 
     private void Start()
     {
@@ -43,6 +44,9 @@ public class Player : MonoBehaviour
     {
         HandleInput();
 
+        if (actionLockTimer > 0f)
+            actionLockTimer -= Time.deltaTime;
+
         if (rb == null)
             HandleMovement(Time.deltaTime);
     }
@@ -61,12 +65,14 @@ public class Player : MonoBehaviour
         if (moveInput.sqrMagnitude > 1f)
             moveInput.Normalize();
 
+        if (actionLockTimer > 0f)
+            return;
+
         if (Input.GetButtonDown("Fire2"))
         {
             Attack();
         }
-
-        if (Input.GetButtonDown("Fire3"))
+        else if (Input.GetButtonDown("Fire3"))
         {
             Parry();
         }
@@ -74,7 +80,7 @@ public class Player : MonoBehaviour
 
     private void HandleMovement(float deltaTime)
     {
-        bool isInAction = isAttacking || isParrying;
+        bool isInAction = actionLockTimer > 0f;
         float inputMagnitude = moveInput.magnitude;
 
         Vector3 moveDirection = GetMoveDirectionFromInput();
@@ -154,35 +160,23 @@ public class Player : MonoBehaviour
 
     private void Attack()
     {
-        if (isAttacking || isParrying)
-            return;
-
-        isAttacking = true;
         if (animator != null)
+        {
+            animator.ResetTrigger("Parry");
             animator.SetTrigger("Attack");
+        }
 
-        Invoke(nameof(ResetAttack), 0.6f);
-    }
-
-    private void ResetAttack()
-    {
-        isAttacking = false;
+        actionLockTimer = attackLockDuration;
     }
 
     private void Parry()
     {
-        if (isAttacking || isParrying)
-            return;
-
-        isParrying = true;
         if (animator != null)
+        {
+            animator.ResetTrigger("Attack");
             animator.SetTrigger("Parry");
+        }
 
-        Invoke(nameof(ResetParry), 0.8f);
-    }
-
-    private void ResetParry()
-    {
-        isParrying = false;
+        actionLockTimer = parryLockDuration;
     }
 }
