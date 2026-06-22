@@ -9,17 +9,28 @@ public class Player : MonoBehaviour
     [SerializeField] private float deceleration = 18f;
     [SerializeField] private float rotationSpeed = 10f;
     [SerializeField] private bool lockMovementWhileAction = true;
-    [SerializeField] private float attackLockDuration = 0.6f;
-    [SerializeField] private float parryLockDuration = 0.8f;
+    [SerializeField] private bool blockUpwardDrift = true;
+    [SerializeField] private float dodgeForwardDistance = 2.2f;
+    [SerializeField] private float dodgeForwardDuration = 0.22f;
+    [SerializeField] private float dodgeMoveSpeedCarry = 1f;
     [SerializeField] private Animator animator;
     [SerializeField] private Rigidbody rb;
     [SerializeField] private Transform cameraTransform;
+
+    private const string TriggerAtack = "Atack";
+    private const string TriggerAtack2 = "Atack2";
+    private const string TriggerDodge = "Dodge";
+    private const string TriggerHeal = "Heal";
 
     private OrbitCamera orbitCamera;
 
     private Vector3 moveInput;
     private float currentSpeed;
-    private float actionLockTimer;
+    private Vector3 dodgeVelocity;
+    private float dodgeMoveTimer;
+    private bool actionLocked;
+    private int lockedActionHash;
+    private Coroutine actionLockCoroutine;
 
     private void Start()
     {
@@ -36,16 +47,19 @@ public class Player : MonoBehaviour
         if (orbitCamera == null)
             orbitCamera = FindObjectOfType<OrbitCamera>();
 
+        if (animator != null)
+            animator.applyRootMotion = false;
+
         if (rb != null)
+        {
             rb.interpolation = RigidbodyInterpolation.Interpolate;
+            rb.constraints |= RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        }
     }
 
     private void Update()
     {
         HandleInput();
-
-        if (actionLockTimer > 0f)
-            actionLockTimer -= Time.deltaTime;
 
         if (rb == null)
             HandleMovement(Time.deltaTime);
@@ -59,32 +73,52 @@ public class Player : MonoBehaviour
 
     private void HandleInput()
     {
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
+        if (actionLocked)
+        {
+            moveInput = Vector3.zero;
+            return;
+        }
+
+        float horizontal = Input.GetAxisRaw("Horizontal");
+        float vertical = Input.GetAxisRaw("Vertical");
         moveInput = new Vector3(horizontal, 0, vertical);
         if (moveInput.sqrMagnitude > 1f)
             moveInput.Normalize();
 
-        if (actionLockTimer > 0f)
-            return;
+        bool atackPressed = Input.GetButtonDown("Jump");
+        bool atack2Pressed = Input.GetButtonDown("Fire2");
+        bool dodgePressed = Input.GetButtonDown("Fire1");
+        bool healPressed = Input.GetButtonDown("Fire3");
 
-        if (Input.GetButtonDown("Fire2"))
+        // Y button
+        if (atackPressed)
         {
-            Attack();
+            Atack();
         }
-        else if (Input.GetButtonDown("Fire3"))
+        // B button
+        else if (atack2Pressed)
         {
-            Parry();
+            Atack2();
+        }
+        // A button
+        else if (dodgePressed)
+        {
+            Dodge();
+        }
+        // X button
+        else if (healPressed)
+        {
+            Heal();
         }
     }
 
     private void HandleMovement(float deltaTime)
     {
-        bool isInAction = actionLockTimer > 0f;
+        bool isInAction = actionLocked;
         float inputMagnitude = moveInput.magnitude;
 
         Vector3 moveDirection = GetMoveDirectionFromInput();
-        if (lockMovementWhileAction && isInAction)
+        if (isInAction)
         {
             moveDirection = Vector3.zero;
             inputMagnitude = 0f;
@@ -103,26 +137,183 @@ public class Player : MonoBehaviour
                 float t = (inputMagnitude - runInputThreshold) / Mathf.Max(0.01f, 1f - runInputThreshold);
                 targetSpeed = Mathf.Lerp(walkSpeed, runSpeed, t);
             }
-        }
 
-        float speedChange = targetSpeed > currentSpeed ? acceleration : deceleration;
-        currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, speedChange * deltaTime);
+            currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, acceleration * deltaTime);
+        }
+        else
+        {
+            currentSpeed = 0f;
+        }
 
         Vector3 velocity = moveDirection * currentSpeed;
 
+        if (dodgeMoveTimer > 0f)
+        {
+            velocity = dodgeVelocity;
+            dodgeMoveTimer -= deltaTime;
+            if (dodgeMoveTimer <= 0f)
+            {
+                dodgeMoveTimer = 0f;
+                dodgeVelocity = Vector3.zero;
+            }
+        }
+
         if (rb != null)
-            rb.linearVelocity = new Vector3(velocity.x, rb.linearVelocity.y, velocity.z);
+        {
+            float yVelocity = rb.linearVelocity.y;
+            if (blockUpwardDrift && yVelocity > 0f)
+                yVelocity = 0f;
+
+            rb.linearVelocity = new Vector3(velocity.x, yVelocity, velocity.z);
+        }
         else
+        {
             transform.Translate(velocity * deltaTime, Space.World);
+        }
 
         if (moveDirection.sqrMagnitude > 0.0001f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, rotationSpeed * deltaTime);
+            if (rb != null)
+            {
+                Quaternion smoothRotation = Quaternion.Slerp(rb.rotation, targetRotation, rotationSpeed * deltaTime);
+                rb.MoveRotation(smoothRotation);
+            }
+            else
+            {
+                transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, rotationSpeed * deltaTime);
+            }
         }
 
         if (animator != null)
-            animator.SetBool("IsWalking", currentSpeed > 0.05f);
+            animator.SetBool("IsWalking", inputMagnitude > 0.05f && !isInAction);
+    }
+
+    private void TriggerAction(string triggerName)
+    {
+        if (animator != null)
+        {
+            animator.SetBool("IsWalking", false);
+            ClearActionTriggers();
+
+            int previousStateHash = animator.GetCurrentAnimatorStateInfo(0).fullPathHash;
+
+            animator.SetTrigger(triggerName);
+            lockedActionHash = Animator.StringToHash(triggerName);
+            actionLocked = true;
+
+            if (actionLockCoroutine != null)
+                StopCoroutine(actionLockCoroutine);
+            actionLockCoroutine = StartCoroutine(UnlockWhenTriggeredStateFinishes(previousStateHash));
+        }
+    }
+
+    private System.Collections.IEnumerator UnlockWhenTriggeredStateFinishes(int previousStateHash)
+    {
+        float timeout = 0.5f;
+        while (timeout > 0f && animator != null && animator.GetCurrentAnimatorStateInfo(0).fullPathHash == previousStateHash)
+        {
+            timeout -= Time.deltaTime;
+            yield return null;
+        }
+
+        if (animator == null)
+        {
+            actionLocked = false;
+            actionLockCoroutine = null;
+            yield break;
+        }
+
+        int actionStateHash = animator.GetCurrentAnimatorStateInfo(0).fullPathHash;
+
+        while (animator != null)
+        {
+            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+
+            if (!animator.IsInTransition(0) && state.fullPathHash == actionStateHash && state.normalizedTime >= 1f)
+                break;
+
+            if (!animator.IsInTransition(0) && state.fullPathHash != actionStateHash)
+                break;
+
+            yield return null;
+        }
+
+        actionLocked = false;
+        ClearActionTriggers();
+        actionLockCoroutine = null;
+    }
+
+    private void Atack()
+    {
+        TriggerAction(TriggerAtack);
+    }
+
+    private void Atack2()
+    {
+        TriggerAction(TriggerAtack2);
+    }
+
+    private void Dodge()
+    {
+        TriggerAction(TriggerDodge);
+
+        float duration = Mathf.Max(0.01f, dodgeForwardDuration);
+        Vector3 dodgeDirection = GetMoveDirectionFromInput();
+        if (dodgeDirection.sqrMagnitude < 0.0001f)
+            dodgeDirection = transform.forward;
+        else
+            dodgeDirection.Normalize();
+
+        float baseDodgeSpeed = dodgeForwardDistance / duration;
+        float carrySpeed = currentSpeed * dodgeMoveSpeedCarry;
+
+        dodgeVelocity = dodgeDirection * (baseDodgeSpeed + carrySpeed);
+        dodgeVelocity.y = 0f;
+        dodgeMoveTimer = duration;
+    }
+
+    private void Heal()
+    {
+        TriggerAction(TriggerHeal);
+    }
+
+    private void ClearActionTriggers()
+    {
+        if (animator == null)
+            return;
+
+        animator.ResetTrigger(TriggerAtack);
+        animator.ResetTrigger(TriggerAtack2);
+        animator.ResetTrigger(TriggerDodge);
+        animator.ResetTrigger(TriggerHeal);
+    }
+
+    private bool IsActionAnimationPlaying()
+    {
+        if (animator == null)
+            return false;
+
+        AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+        if (IsActionState(current))
+            return true;
+
+        if (animator.IsInTransition(0))
+        {
+            AnimatorStateInfo next = animator.GetNextAnimatorStateInfo(0);
+            if (IsActionState(next))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool IsActionState(AnimatorStateInfo state)
+    {
+        return state.IsName(TriggerAtack)
+            || state.IsName(TriggerAtack2)
+            || state.IsName(TriggerDodge)
+            || state.IsName(TriggerHeal);
     }
 
     private Vector3 GetMoveDirectionFromInput()
@@ -156,27 +347,5 @@ public class Player : MonoBehaviour
             direction.Normalize();
 
         return direction;
-    }
-
-    private void Attack()
-    {
-        if (animator != null)
-        {
-            animator.ResetTrigger("Parry");
-            animator.SetTrigger("Attack");
-        }
-
-        actionLockTimer = attackLockDuration;
-    }
-
-    private void Parry()
-    {
-        if (animator != null)
-        {
-            animator.ResetTrigger("Attack");
-            animator.SetTrigger("Parry");
-        }
-
-        actionLockTimer = parryLockDuration;
     }
 }

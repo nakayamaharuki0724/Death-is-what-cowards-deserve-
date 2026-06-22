@@ -7,7 +7,7 @@ public class OrbitCamera : MonoBehaviour
     public float sensitivity = 3f;
     public float distance = 5f;
 
-    public Vector3 offset = new Vector3(0, 1.6f, 0);
+    public Vector3 offset = new Vector3(0, 2.5f, 0);
 
     public float minY = -30f;
     public float maxY = 60f;

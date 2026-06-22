@@ -272,10 +272,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.5
+  m_Radius: 0.2
   m_Height: 1
   m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!54 &492002309
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -315,15 +315,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1eaefa84e0c65b4fa6c266792fedbc3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walkSpeed: 2.2
-  runSpeed: 5
+  walkSpeed: 5
+  runSpeed: 10
   runInputThreshold: 0.75
   acceleration: 14
   deceleration: 18
   rotationSpeed: 10
   lockMovementWhileAction: 1
-  attackLockDuration: 0.6
-  parryLockDuration: 0.8
+  blockUpwardDrift: 1
+  dodgeForwardDistance: 1.2
+  dodgeForwardDuration: 0.15
+  dodgeMoveSpeedCarry: 1
   animator: {fileID: 492002306}
   rb: {fileID: 492002309}
   cameraTransform: {fileID: 492002307}
@@ -353,7 +355,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5ac2ffd3d487a244383e825f84f5adef, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.645834
+      value: 1.758
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 5ac2ffd3d487a244383e825f84f5adef, type: 3}
       propertyPath: m_LocalPosition.z
@@ -580,8 +582,10 @@ MonoBehaviour:
   deceleration: 18
   rotationSpeed: 10
   lockMovementWhileAction: 1
-  attackLockDuration: 0.6
-  parryLockDuration: 0.8
+  blockUpwardDrift: 1
+  dodgeForwardDistance: 1.2
+  dodgeForwardDuration: 0.15
+  dodgeMoveSpeedCarry: 1
   animator: {fileID: 0}
   rb: {fileID: 903489473}
   cameraTransform: {fileID: 903489476}
@@ -695,10 +699,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af0a4afc1226c1a44a41a2ffec3e2a7d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  player: {fileID: 903489476}
+  player: {fileID: 492002307}
   sensitivity: 1.5
   distance: 2
-  offset: {x: 0, y: 1, z: 0}
+  offset: {x: 0, y: 1.5, z: 0}
   minY: -30
   maxY: 60
   rightStickHorizontalAxis: CameraHorizontal
