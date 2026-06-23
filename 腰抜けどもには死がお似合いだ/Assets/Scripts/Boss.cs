@@ -3,6 +3,7 @@ using UnityEngine;
 public class BossController : MonoBehaviour
 {
     public Transform player;
+    public ParticleSystem flame;
     public float speed = 5f;
     public float stopDistance = 3f;
     public float rotationSpeed = 5f;
@@ -21,13 +22,16 @@ public class BossController : MonoBehaviour
     }
     void Start()
     {
+        flame.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
         StartCoroutine(StartBattle());
     }
     IEnumerator StartBattle()
     {
-        hasStarted = true;
+        
         SetAction("Scream");
         yield return new WaitForSeconds(2f);
+        hasStarted = true;
         SetAction("Run");
     }
     void Update()
@@ -109,8 +113,18 @@ public class BossController : MonoBehaviour
         isAttacking = true;
         // ˆÚ“®~‚ß‚é(canMove false‚É‚È‚é‚©‚çOK)
         SetAction(action);
+        if (action == "Flame Attack")
+        {
+            flame.Play();
+        }
+
         // UŒ‚’†‚Í‰ñ“]‚µ‚È‚¢(ŠJn‚ÌŒü‚«‚ÅŒÅ’è)
         yield return new WaitForSeconds(duration);
+        if (action == "Flame Attack")
+        {
+            flame.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+
         // UŒ‚Œã‚ÉIdle01‚ğ1•b‹²‚Ş
         SetAction("Idle01");
         yield return new WaitForSeconds(1f);
