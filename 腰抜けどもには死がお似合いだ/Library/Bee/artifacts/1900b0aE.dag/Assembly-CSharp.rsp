@@ -400,6 +400,7 @@
 -analyzer:"C:/Program Files/Unity/Hub/Editor/6000.0.45f1/Editor/Data/Tools/Unity.SourceGenerators/Unity.SourceGenerators.dll"
 -analyzer:"C:/Program Files/Unity/Hub/Editor/6000.0.45f1/Editor/Data/Tools/Unity.SourceGenerators/Unity.UIToolkit.SourceGenerator.dll"
 "Assets/Kevin Iglesias/Human Animations/Scripts/SpineProxy.cs"
+"Assets/Scripts/AttackHitBox.cs"
 "Assets/Scripts/Boss.cs"
 "Assets/Scripts/Player.cs"
 "Assets/Scripts/TitleManager.cs"
