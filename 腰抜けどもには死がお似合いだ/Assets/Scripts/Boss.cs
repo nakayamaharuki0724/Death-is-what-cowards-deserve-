@@ -7,6 +7,7 @@ public class Boss : MonoBehaviour
     public ParticleSystem flame;
     public GameObject biteHitBox;
     public GameObject clawHitBox;
+    public GameObject fireHitBox;
 
     public float speed = 5f;
     public float stopDistance = 3f;
@@ -32,6 +33,7 @@ public class Boss : MonoBehaviour
 
         biteHitBox.SetActive(false);
         clawHitBox.SetActive(false);
+        fireHitBox.SetActive(false);
 
         StartCoroutine(StartBattle());
     }
@@ -149,6 +151,7 @@ public class Boss : MonoBehaviour
         }
         else if (action == "Flame Attack")
         {
+            fireHitBox.SetActive(true);
             flame.Play();
         }
 
@@ -159,6 +162,7 @@ public class Boss : MonoBehaviour
 
         if (action == "Flame Attack")
         {
+            fireHitBox.SetActive(false);
             flame.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
 
