@@ -402,6 +402,7 @@
 "Assets/Kevin Iglesias/Human Animations/Scripts/SpineProxy.cs"
 "Assets/Scripts/Boss.cs"
 "Assets/Scripts/FireHitBox.cs"
+"Assets/Scripts/GameClearManager.cs"
 "Assets/Scripts/Player.cs"
 "Assets/Scripts/TitleManager.cs"
 "Assets/Scripts/TPSCamera.cs"
