@@ -9,6 +9,8 @@ public class Boss : MonoBehaviour
     public GameObject clawHitBox;
     public GameObject fireHitBox;
 
+    public float BossHP = 1000.0f;
+
     public float speed = 5f;
     public float stopDistance = 3f;
     public float rotationSpeed = 5f;
@@ -18,6 +20,7 @@ public class Boss : MonoBehaviour
     bool canMove = false;
     bool hasStarted = false;
     bool isAttacking = false;
+    bool isFlying = false;
 
     float attackCooldown = 2f;
     float attackTimer = 0f;
@@ -54,13 +57,13 @@ public class Boss : MonoBehaviour
 
         UpdateMoveState();
 
-        if (!isAttacking)
+        if (!isAttacking && !isFlying)
             TryAttack();
 
-        if (canMove)
+        if (canMove && !isFlying)
             Move();
 
-        if (!isAttacking)
+        if (!isAttacking && !isFlying)
             RotateTowardsPlayer();
     }
 
@@ -171,6 +174,32 @@ public class Boss : MonoBehaviour
 
         isAttacking = false;
         attackTimer = attackCooldown;
+
+        if (!isFlying && Random.value < 1f)
+        {
+            StartCoroutine(FlyRoutine());
+            yield break;
+        }
+
+        SetAction("Run");
+    }
+
+    IEnumerator FlyRoutine()
+    {
+        isFlying = true;
+        isAttacking = true;
+
+        SetAction("Take Off");
+        yield return new WaitForSeconds(4.0f);
+
+        SetAction("Fly Forward");
+        yield return new WaitForSeconds(5.0f);
+
+        SetAction("Land");
+        yield return new WaitForSeconds(4.0f);
+
+        isFlying = false;
+        isAttacking = false;
 
         SetAction("Run");
     }
