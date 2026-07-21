@@ -14,6 +14,7 @@ public class Boss : MonoBehaviour
     public float speed = 5f;
     public float stopDistance = 3f;
     public float rotationSpeed = 5f;
+    public float flyAttackRange = 10f; // 好きな距離に調整してください
 
     Animator animator;
 
@@ -60,11 +61,11 @@ public class Boss : MonoBehaviour
         if (!isAttacking && !isFlying)
             TryAttack();
 
-        if (canMove && !isFlying)
+        if (canMove) // Run / Fly Forward のときだけ移動・回転
+        {
             Move();
-
-        if (!isAttacking && !isFlying)
             RotateTowardsPlayer();
+        }
     }
 
     void UpdateMoveState()
@@ -110,7 +111,19 @@ public class Boss : MonoBehaviour
 
     void RotateTowardsPlayer()
     {
-        Vector3 lookPos = new Vector3(player.position.x, transform.position.y, player.position.z);
+        Vector3 lookPos;
+
+        if (isFlying)
+        {
+            // 飛行中は高さも考慮して、実際にプレイヤーのいる方向を向く
+            lookPos = player.position;
+        }
+        else
+        {
+            // 地上では今まで通り水平方向のみ
+            lookPos = new Vector3(player.position.x, transform.position.y, player.position.z);
+        }
+
         Vector3 dir = (lookPos - transform.position).normalized;
 
         if (dir.sqrMagnitude < 0.001f) return;
@@ -136,6 +149,7 @@ public class Boss : MonoBehaviour
         animator.SetBool("Basic Attack", false);
         animator.SetBool("Claw Attack", false);
         animator.SetBool("Flame Attack", false);
+        animator.SetBool("Fly Flame Attack", false);
     }
 
     IEnumerator AttackRoutine(string action, float duration)
@@ -175,7 +189,7 @@ public class Boss : MonoBehaviour
         isAttacking = false;
         attackTimer = attackCooldown;
 
-        if (!isFlying && Random.value < 1f)
+        if (!isFlying && Random.value < 0.1f)
         {
             StartCoroutine(FlyRoutine());
             yield break;
@@ -193,7 +207,14 @@ public class Boss : MonoBehaviour
         yield return new WaitForSeconds(4.0f);
 
         SetAction("Fly Forward");
-        yield return new WaitForSeconds(5.0f);
+
+        // 攻撃範囲に入るまで追尾を続ける
+        while (Vector3.Distance(transform.position, player.position) > flyAttackRange)
+        {
+            yield return null;
+        }
+
+        yield return StartCoroutine(FlyFlameAttackRoutine());
 
         SetAction("Land");
         yield return new WaitForSeconds(4.0f);
@@ -202,5 +223,18 @@ public class Boss : MonoBehaviour
         isAttacking = false;
 
         SetAction("Run");
+    }
+
+    IEnumerator FlyFlameAttackRoutine()
+    {
+        SetAction("Fly Flame Attack");
+
+        fireHitBox.SetActive(true);
+        flame.Play();
+
+        yield return new WaitForSeconds(3f);
+
+        fireHitBox.SetActive(false);
+        flame.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
     }
 }
