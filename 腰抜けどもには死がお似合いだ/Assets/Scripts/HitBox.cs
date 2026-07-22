@@ -2,27 +2,58 @@ using UnityEngine;
 
 public class HitBox : MonoBehaviour
 {
+    public int biteDamage = 20;
+    public int clawDamage = 15;
+    public int fireDamage = 5;
+
+    public float fireDamageInterval = 0.5f; // 0.5秒ごと
+
+    private float fireTimer = 0f;
+
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Player")) return;
 
+        Player player = other.GetComponent<Player>();
+        if (player == null) return;
+
         if (gameObject.name.Contains("Claw"))
         {
             Debug.Log("爪攻撃ヒット");
+            player.TakeDamage(clawDamage);
         }
         else if (gameObject.name.Contains("Basic"))
         {
             Debug.Log("噛みつきヒット");
+            player.TakeDamage(biteDamage);
         }
     }
 
     private void OnTriggerStay(Collider other)
     {
         if (!other.CompareTag("Player")) return;
+        if (!gameObject.name.Contains("Fire")) return;
 
-        if (gameObject.name.Contains("Fire"))
+        fireTimer += Time.deltaTime;
+
+        if (fireTimer >= fireDamageInterval)
         {
-            Debug.Log("炎ダメージ");
+            fireTimer = 0f;
+
+            Player player = other.GetComponent<Player>();
+            if (player != null)
+            {
+                Debug.Log("炎ダメージ");
+                player.TakeDamage(fireDamage);
+            }
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            fireTimer = 0f;
         }
     }
 }

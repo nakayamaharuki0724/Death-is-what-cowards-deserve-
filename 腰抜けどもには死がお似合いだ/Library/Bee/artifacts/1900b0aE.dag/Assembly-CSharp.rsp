@@ -405,6 +405,7 @@
 "Assets/Scripts/GameOverManager.cs"
 "Assets/Scripts/HitBox.cs"
 "Assets/Scripts/Player.cs"
+"Assets/Scripts/PlayerHP.cs"
 "Assets/Scripts/TitleManager.cs"
 "Assets/Scripts/TPSCamera.cs"
 -langversion:9.0

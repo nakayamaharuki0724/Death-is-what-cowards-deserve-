@@ -16,6 +16,7 @@ public class Player : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private Rigidbody rb;
     [SerializeField] private Transform cameraTransform;
+    [SerializeField] private int maxHP = 100;
 
     private const string TriggerAtack = "Atack";
     private const string TriggerAtack2 = "Atack2";
@@ -31,6 +32,7 @@ public class Player : MonoBehaviour
     private bool actionLocked;
     private int lockedActionHash;
     private Coroutine actionLockCoroutine;
+    private int currentHP;
 
     private void Start()
     {
@@ -55,6 +57,8 @@ public class Player : MonoBehaviour
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             rb.constraints |= RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         }
+
+        currentHP = maxHP;
     }
 
     private void Update()
@@ -347,5 +351,30 @@ public class Player : MonoBehaviour
             direction.Normalize();
 
         return direction;
+    }
+
+    public void TakeDamage(int damage)
+    {
+        currentHP -= damage;
+
+        if (currentHP < 0)
+            currentHP = 0;
+
+        Debug.Log("HP : " + currentHP);
+
+        if (currentHP <= 0)
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene("GameOverScene");
+        }
+    }
+
+    public int GetCurrentHP()
+    {
+        return currentHP;
+    }
+
+    public int GetMaxHP()
+    {
+        return maxHP;
     }
 }
