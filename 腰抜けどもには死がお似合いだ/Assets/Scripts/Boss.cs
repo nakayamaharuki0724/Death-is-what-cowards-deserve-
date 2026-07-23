@@ -15,6 +15,9 @@ public class Boss : MonoBehaviour
     public float stopDistance = 3f;
     public float rotationSpeed = 5f;
     public float flyAttackRange = 10f; // çDÇ´Ç»ãóó£Ç…í≤êÆÇµÇƒÇ≠ÇæÇ≥Ç¢
+    public int maxHP = 300;
+
+    private int currentHP;
 
     Animator animator;
 
@@ -33,6 +36,8 @@ public class Boss : MonoBehaviour
 
     void Start()
     {
+        currentHP = maxHP;
+
         flame.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
         biteHitBox.SetActive(false);
@@ -236,5 +241,20 @@ public class Boss : MonoBehaviour
 
         fireHitBox.SetActive(false);
         flame.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+    }
+
+    public void TakeDamage(int damage)
+    {
+        currentHP -= damage;
+
+        if (currentHP < 0)
+            currentHP = 0;
+
+        Debug.Log("Boss HP : " + currentHP);
+
+        if (currentHP <= 0)
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene("GameClearScene");
+        }
     }
 }
