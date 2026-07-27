@@ -401,6 +401,7 @@
 -analyzer:"C:/Program Files/Unity/Hub/Editor/6000.0.45f1/Editor/Data/Tools/Unity.SourceGenerators/Unity.UIToolkit.SourceGenerator.dll"
 "Assets/Kevin Iglesias/Human Animations/Scripts/SpineProxy.cs"
 "Assets/Scripts/Boss.cs"
+"Assets/Scripts/BossHitBox.cs"
 "Assets/Scripts/GameClearManager.cs"
 "Assets/Scripts/GameOverManager.cs"
 "Assets/Scripts/HitBox.cs"

@@ -158,6 +158,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: BossEnemy
       objectReference: {fileID: 0}
+    - target: {fileID: 139696, guid: eb58e8f2831a51f45a44a261e6710cdd, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
     - target: {fileID: 446710, guid: eb58e8f2831a51f45a44a261e6710cdd, type: 3}
       propertyPath: m_LocalPosition.y
       value: 0.66
@@ -400,6 +404,7 @@ MonoBehaviour:
   stopDistance: 9
   rotationSpeed: 5
   flyAttackRange: 10
+  maxHP: 300
 --- !u!4 &269940591 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 485588, guid: eb58e8f2831a51f45a44a261e6710cdd, type: 3}
@@ -5629,6 +5634,10 @@ PrefabInstance:
       propertyPath: m_TagString
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 1051571768989249988, guid: 5ac2ffd3d487a244383e825f84f5adef, type: 3}
+      propertyPath: m_TagString
+      value: PlayerAttack
+      objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 5ac2ffd3d487a244383e825f84f5adef, type: 3}
       propertyPath: m_Controller
       value: 
@@ -5646,6 +5655,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5ac2ffd3d487a244383e825f84f5adef, type: 3}
       insertIndex: -1
       addedObject: {fileID: 492002308}
+    - targetCorrespondingSourceObject: {fileID: 1051571768989249988, guid: 5ac2ffd3d487a244383e825f84f5adef, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 749471911}
   m_SourcePrefab: {fileID: 100100000, guid: 5ac2ffd3d487a244383e825f84f5adef, type: 3}
 --- !u!1 &705507993
 GameObject:
@@ -5744,6 +5756,32 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!1 &749471907 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1051571768989249988, guid: 5ac2ffd3d487a244383e825f84f5adef, type: 3}
+  m_PrefabInstance: {fileID: 585893762}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &749471911
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 749471907}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.30037224, y: 0.09195961, z: 1.0142062}
+  m_Center: {x: 0.7962848, y: 1.4112257, z: 0.24547829}
 --- !u!1 &756095206
 GameObject:
   m_ObjectHideFlags: 0
@@ -5787,9 +5825,10 @@ GameObject:
   m_Component:
   - component: {fileID: 784674061}
   - component: {fileID: 784674062}
+  - component: {fileID: 784674063}
   m_Layer: 0
   m_Name: DragonTeilHitBox
-  m_TagString: Untagged
+  m_TagString: Boss
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5830,6 +5869,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.5, y: 0.5, z: 5}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &784674063
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 784674060}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74ac91fd1c0149643bc2ce452bb85665, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boss: {fileID: 269940589}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -6324,9 +6376,10 @@ GameObject:
   m_Component:
   - component: {fileID: 1409037100}
   - component: {fileID: 1409037101}
+  - component: {fileID: 1409037102}
   m_Layer: 0
   m_Name: DragonBodyHitBox
-  m_TagString: Untagged
+  m_TagString: Boss
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6367,6 +6420,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1409037102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1409037099}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74ac91fd1c0149643bc2ce452bb85665, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boss: {fileID: 269940589}
 --- !u!1 &1633974717
 GameObject:
   m_ObjectHideFlags: 0
@@ -6590,9 +6656,10 @@ GameObject:
   m_Component:
   - component: {fileID: 1886363532}
   - component: {fileID: 1886363533}
+  - component: {fileID: 1886363534}
   m_Layer: 0
   m_Name: DragonHeadHitBox
-  m_TagString: Untagged
+  m_TagString: Boss
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6633,6 +6700,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1886363534
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1886363531}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74ac91fd1c0149643bc2ce452bb85665, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  boss: {fileID: 269940589}
 --- !u!1 &2053889114
 GameObject:
   m_ObjectHideFlags: 0
