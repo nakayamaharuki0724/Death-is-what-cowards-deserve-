@@ -59,6 +59,7 @@ public class Player : MonoBehaviour
         }
 
         currentHP = maxHP;
+        Debug.Log("Start HP = " + currentHP);
     }
 
     private void Update()
