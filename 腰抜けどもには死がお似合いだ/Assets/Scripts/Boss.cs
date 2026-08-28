@@ -257,4 +257,14 @@ public class Boss : MonoBehaviour
             UnityEngine.SceneManagement.SceneManager.LoadScene("GameClearScene");
         }
     }
+
+    public int GetCurrentHP()
+    {
+        return currentHP;
+    }
+
+    public int GetMaxHP()
+    {
+        return maxHP;
+    }
 }
