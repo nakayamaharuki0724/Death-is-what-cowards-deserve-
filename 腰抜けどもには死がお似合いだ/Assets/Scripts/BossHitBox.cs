@@ -4,11 +4,11 @@ public class BossHitBox : MonoBehaviour
 {
     public Boss boss;
 
-    private void OnTriggerEnter(Collider other)
+    public void TakeDamage(int damage)
     {
-        if (!other.CompareTag("PlayerAttack"))
+        if (boss == null)
             return;
 
-        boss.TakeDamage(10);
+        boss.TakeDamage(damage);
     }
 }

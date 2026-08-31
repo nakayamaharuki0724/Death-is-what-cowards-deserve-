@@ -17,6 +17,8 @@ public class Player : MonoBehaviour
     [SerializeField] private Rigidbody rb;
     [SerializeField] private Transform cameraTransform;
     [SerializeField] private int maxHP = 100;
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip damageSE;
 
     private const string TriggerAtack = "Atack";
     private const string TriggerAtack2 = "Atack2";
@@ -363,6 +365,12 @@ public class Player : MonoBehaviour
             currentHP = 0;
 
         Debug.Log("HP : " + currentHP);
+
+        // É_ÉÅÅ[ÉWSE
+        if (audioSource != null && damageSE != null)
+        {
+            audioSource.PlayOneShot(damageSE);
+        }
 
         if (currentHP <= 0)
         {

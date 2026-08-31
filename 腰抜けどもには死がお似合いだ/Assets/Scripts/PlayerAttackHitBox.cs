@@ -1,17 +1,26 @@
 using UnityEngine;
 
-public class PlayerAttackHitBox : MonoBehaviour
+public class PlayerAttack : MonoBehaviour
 {
-    public int damage = 10;
+    public int damage = 30;
+
+    public AudioSource audioSource;
+    public AudioClip hitSE;
 
     private void OnTriggerEnter(Collider other)
     {
-        Boss boss = other.GetComponentInParent<Boss>();
+        BossHitBox bossHitBox = other.GetComponent<BossHitBox>();
 
-        if (boss == null) return;
+        if (bossHitBox == null)
+            return;
 
-        Debug.Log("プレイヤーの攻撃がドラゴンにヒット！");
+        bossHitBox.TakeDamage(damage);
 
-        boss.TakeDamage(damage);
+        if (audioSource != null && hitSE != null)
+        {
+            audioSource.PlayOneShot(hitSE);
+        }
+
+        Debug.Log("ドラゴンに攻撃！");
     }
 }
