@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
@@ -19,6 +21,20 @@ public class Player : MonoBehaviour
     [SerializeField] private int maxHP = 100;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip damageSE;
+    [SerializeField] private string gameOverSceneName = "GameOverScene";
+    [SerializeField] private float fadeDuration = 1f;
+    [SerializeField] private string deadTriggerName = "Dead";
+    [SerializeField] private string deadStateName = "Dead";
+    [SerializeField] private float deadAnimationFallbackWait = 1.5f;
+    [SerializeField] private string damageTriggerName = "Damage";
+    [SerializeField] private string damageStateName = "Damage";
+    [SerializeField] private float damageAnimationFallbackWait = 0.4f;
+    [SerializeField] private float damageRecoverInvincibleTime = 0.35f;
+    [SerializeField] private int damageAnimationThreshold = 15;
+    [SerializeField] private GameObject attackHitBox;
+    [SerializeField] private GameObject attack2HitBox;
+    [SerializeField] private float attackHitActiveTime = 0.2f;
+    [SerializeField] private float attack2HitActiveTime = 0.25f;
 
     private const string TriggerAtack = "Atack";
     private const string TriggerAtack2 = "Atack2";
@@ -35,6 +51,11 @@ public class Player : MonoBehaviour
     private int lockedActionHash;
     private Coroutine actionLockCoroutine;
     private int currentHP;
+    private bool isDead;
+    private bool isInvincible;
+    private Coroutine damageReactionCoroutine;
+    private bool isDodging;
+    private bool isDamageReacting;
 
     private void Start()
     {
@@ -60,6 +81,12 @@ public class Player : MonoBehaviour
             rb.constraints |= RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         }
 
+        if (attackHitBox != null)
+            attackHitBox.SetActive(false);
+
+        if (attack2HitBox != null)
+            attack2HitBox.SetActive(false);
+
         currentHP = maxHP;
         Debug.Log("Start HP = " + currentHP);
 
@@ -81,6 +108,12 @@ public class Player : MonoBehaviour
 
     private void HandleInput()
     {
+        if (isDead)
+        {
+            moveInput = Vector3.zero;
+            return;
+        }
+
         if (actionLocked)
         {
             moveInput = Vector3.zero;
@@ -125,6 +158,25 @@ public class Player : MonoBehaviour
         bool isInAction = actionLocked;
         float inputMagnitude = moveInput.magnitude;
 
+        if (isDead)
+        {
+            isInAction = true;
+            inputMagnitude = 0f;
+        }
+
+        if (isDamageReacting)
+        {
+            isInAction = true;
+            inputMagnitude = 0f;
+        }
+
+        if (isDodging && !actionLocked)
+        {
+            isDodging = false;
+            dodgeVelocity = Vector3.zero;
+            dodgeMoveTimer = 0f;
+        }
+
         Vector3 moveDirection = GetMoveDirectionFromInput();
         if (isInAction)
         {
@@ -155,7 +207,11 @@ public class Player : MonoBehaviour
 
         Vector3 velocity = moveDirection * currentSpeed;
 
-        if (dodgeMoveTimer > 0f)
+        if (isDodging)
+        {
+            velocity = dodgeVelocity;
+        }
+        else if (dodgeMoveTimer > 0f)
         {
             velocity = dodgeVelocity;
             dodgeMoveTimer -= deltaTime;
@@ -194,7 +250,10 @@ public class Player : MonoBehaviour
         }
 
         if (animator != null)
-            animator.SetBool("IsWalking", inputMagnitude > 0.05f && !isInAction);
+        {
+            bool canWalkAnim = inputMagnitude > 0.05f && !isInAction && !isInvincible && !isDamageReacting;
+            animator.SetBool("IsWalking", canWalkAnim);
+        }
     }
 
     private void TriggerAction(string triggerName)
@@ -255,11 +314,26 @@ public class Player : MonoBehaviour
     private void Atack()
     {
         TriggerAction(TriggerAtack);
+        StartCoroutine(ActivateHitBox(attackHitBox, attackHitActiveTime));
     }
 
     private void Atack2()
     {
         TriggerAction(TriggerAtack2);
+        StartCoroutine(ActivateHitBox(attack2HitBox, attack2HitActiveTime));
+    }
+
+    private System.Collections.IEnumerator ActivateHitBox(GameObject hitBox, float activeTime)
+    {
+        if (hitBox == null)
+            yield break;
+
+        hitBox.SetActive(false);
+        yield return null;
+
+        hitBox.SetActive(true);
+        yield return new WaitForSeconds(Mathf.Max(0.01f, activeTime));
+        hitBox.SetActive(false);
     }
 
     private void Dodge()
@@ -279,11 +353,15 @@ public class Player : MonoBehaviour
         dodgeVelocity = dodgeDirection * (baseDodgeSpeed + carrySpeed);
         dodgeVelocity.y = 0f;
         dodgeMoveTimer = duration;
+        isDodging = true;
     }
 
     private void Heal()
     {
         TriggerAction(TriggerHeal);
+
+        currentHP = Mathf.Min(currentHP + 50, maxHP);
+        Debug.Log("HP : " + currentHP);
     }
 
     private void ClearActionTriggers()
@@ -295,6 +373,26 @@ public class Player : MonoBehaviour
         animator.ResetTrigger(TriggerAtack2);
         animator.ResetTrigger(TriggerDodge);
         animator.ResetTrigger(TriggerHeal);
+        animator.ResetTrigger(damageTriggerName);
+        animator.ResetTrigger(deadTriggerName);
+    }
+
+    private void ForcePlayState(string stateName)
+    {
+        if (animator == null || string.IsNullOrEmpty(stateName))
+            return;
+
+        int stateHash = Animator.StringToHash(stateName);
+        if (animator.HasState(0, stateHash))
+        {
+            animator.Play(stateName, 0, 0f);
+            return;
+        }
+
+        string baseLayerStateName = "Base Layer." + stateName;
+        int baseLayerHash = Animator.StringToHash(baseLayerStateName);
+        if (animator.HasState(0, baseLayerHash))
+            animator.Play(baseLayerStateName, 0, 0f);
     }
 
     private bool IsActionAnimationPlaying()
@@ -359,6 +457,9 @@ public class Player : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
+        if (isDead || isInvincible)
+            return;
+
         currentHP -= damage;
 
         if (currentHP < 0)
@@ -366,7 +467,6 @@ public class Player : MonoBehaviour
 
         Debug.Log("HP : " + currentHP);
 
-        // ƒ_ƒ[ƒWSE
         if (audioSource != null && damageSE != null)
         {
             audioSource.PlayOneShot(damageSE);
@@ -374,8 +474,220 @@ public class Player : MonoBehaviour
 
         if (currentHP <= 0)
         {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("GameOverScene");
+            StartCoroutine(HandleDeathSequence());
+            return;
         }
+
+        if (damage < damageAnimationThreshold)
+            return;
+
+        if (damageReactionCoroutine != null)
+            StopCoroutine(damageReactionCoroutine);
+
+        damageReactionCoroutine = StartCoroutine(HandleDamageReaction());
+    }
+
+    private System.Collections.IEnumerator HandleDamageReaction()
+    {
+        isInvincible = true;
+        isDamageReacting = true;
+        actionLocked = true;
+        moveInput = Vector3.zero;
+        currentSpeed = 0f;
+        dodgeMoveTimer = 0f;
+        dodgeVelocity = Vector3.zero;
+        isDodging = false;
+
+        if (actionLockCoroutine != null)
+        {
+            StopCoroutine(actionLockCoroutine);
+            actionLockCoroutine = null;
+        }
+
+        if (animator != null)
+        {
+            animator.SetBool("IsWalking", false);
+            ClearActionTriggers();
+            ForcePlayState(damageStateName);
+            animator.SetTrigger(damageTriggerName);
+        }
+
+        yield return WaitForDamageAnimation();
+
+        float recoverWait = Mathf.Max(0f, damageRecoverInvincibleTime);
+        if (!isDead && recoverWait > 0f)
+            yield return new WaitForSeconds(recoverWait);
+
+        if (!isDead)
+            actionLocked = false;
+
+        isDamageReacting = false;
+        isInvincible = false;
+        damageReactionCoroutine = null;
+    }
+
+    private System.Collections.IEnumerator WaitForDamageAnimation()
+    {
+        if (animator == null)
+        {
+            yield return new WaitForSeconds(damageAnimationFallbackWait);
+            yield break;
+        }
+
+        float enterTimeout = 1f;
+        bool enteredDamageState = false;
+
+        while (enterTimeout > 0f)
+        {
+            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+            if (state.IsName(damageStateName))
+            {
+                enteredDamageState = true;
+                break;
+            }
+
+            enterTimeout -= Time.deltaTime;
+            yield return null;
+        }
+
+        if (!enteredDamageState)
+        {
+            yield return new WaitForSeconds(damageAnimationFallbackWait);
+            yield break;
+        }
+
+        while (animator != null)
+        {
+            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+            if (!animator.IsInTransition(0) && state.IsName(damageStateName) && state.normalizedTime >= 1f)
+                break;
+
+            yield return null;
+        }
+    }
+
+    private System.Collections.IEnumerator HandleDeathSequence()
+    {
+        isDead = true;
+        isInvincible = true;
+        isDamageReacting = false;
+        actionLocked = true;
+        moveInput = Vector3.zero;
+        currentSpeed = 0f;
+        dodgeMoveTimer = 0f;
+        dodgeVelocity = Vector3.zero;
+        isDodging = false;
+
+        if (damageReactionCoroutine != null)
+        {
+            StopCoroutine(damageReactionCoroutine);
+            damageReactionCoroutine = null;
+        }
+
+        if (attackHitBox != null)
+            attackHitBox.SetActive(false);
+
+        if (attack2HitBox != null)
+            attack2HitBox.SetActive(false);
+
+        if (animator != null)
+        {
+            animator.SetBool("IsWalking", false);
+            ClearActionTriggers();
+            animator.SetTrigger(deadTriggerName);
+            ForcePlayState(deadStateName);
+        }
+
+        if (rb != null)
+        {
+            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+        }
+
+        yield return WaitForDeadAnimation();
+        yield return FadeToBlack();
+
+        SceneManager.LoadScene(gameOverSceneName);
+    }
+
+    private System.Collections.IEnumerator WaitForDeadAnimation()
+    {
+        if (animator == null)
+        {
+            yield return new WaitForSeconds(deadAnimationFallbackWait);
+            yield break;
+        }
+
+        float enterTimeout = 1f;
+        bool enteredDeadState = false;
+
+        while (enterTimeout > 0f)
+        {
+            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+            if (state.IsName(deadStateName))
+            {
+                enteredDeadState = true;
+                break;
+            }
+
+            enterTimeout -= Time.deltaTime;
+            yield return null;
+        }
+
+        if (!enteredDeadState)
+        {
+            yield return new WaitForSeconds(deadAnimationFallbackWait);
+            yield break;
+        }
+
+        while (animator != null)
+        {
+            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+            if (!animator.IsInTransition(0) && state.IsName(deadStateName) && state.normalizedTime >= 1f)
+                break;
+
+            yield return null;
+        }
+    }
+
+    private System.Collections.IEnumerator FadeToBlack()
+    {
+        Canvas fadeCanvas = new GameObject("FadeCanvas").AddComponent<Canvas>();
+        fadeCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        fadeCanvas.sortingOrder = short.MaxValue;
+
+        CanvasScaler scaler = fadeCanvas.gameObject.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+
+        fadeCanvas.gameObject.AddComponent<GraphicRaycaster>();
+
+        GameObject imageObject = new GameObject("FadeImage");
+        imageObject.transform.SetParent(fadeCanvas.transform, false);
+
+        RectTransform rect = imageObject.AddComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+
+        Image fadeImage = imageObject.AddComponent<Image>();
+        Color color = Color.black;
+        color.a = 0f;
+        fadeImage.color = color;
+
+        float timer = 0f;
+        float duration = Mathf.Max(0.01f, fadeDuration);
+
+        while (timer < duration)
+        {
+            timer += Time.deltaTime;
+            color.a = Mathf.Clamp01(timer / duration);
+            fadeImage.color = color;
+            yield return null;
+        }
+
+        color.a = 1f;
+        fadeImage.color = color;
     }
 
     public int GetCurrentHP()
